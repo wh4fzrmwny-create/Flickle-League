@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Flickle League</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎬</text></svg>">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Big+Shoulders+Display:wght@700;900&family=Public+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#EDEFF3; --surface:#FFFFFF; --ink:#1B2340; --muted:#5D6580; --line:#D5D9E3;
+  --gold:#E8B33A; --gold-ink:#3A2A00; --miss:#C2412D; --today:#FFF4D6;
+  --s5:#1B2340; --s4:#34407A; --s3:#5A67A8; --s2:#8F99C9; --s1:#C3C9E6;
+  color-scheme:light;
+  box-sizing:border-box;
+  padding-top:env(safe-area-inset-top,0px); padding-bottom:env(safe-area-inset-bottom,0px);
+}
+@media (prefers-color-scheme:dark){
+  :root:not([data-theme="light"]){
+    --bg:#121729; --surface:#1B2240; --ink:#EDEFF3; --muted:#9AA2C0; --line:#2E3760;
+    --gold:#F0C04F; --gold-ink:#2A1E00; --miss:#E5684F; --today:#2B2A2A;
+    --s5:#F0C04F; --s4:#D9B65E; --s3:#A99A6E; --s2:#7A7766; --s1:#4F5160;
+    color-scheme:dark;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#121729; --surface:#1B2240; --ink:#EDEFF3; --muted:#9AA2C0; --line:#2E3760;
+  --gold:#F0C04F; --gold-ink:#2A1E00; --miss:#E5684F; --today:#2B2A2A;
+  --s5:#F0C04F; --s4:#D9B65E; --s3:#A99A6E; --s2:#7A7766; --s1:#4F5160;
+  color-scheme:dark;
+}
+*,*::before,*::after{box-sizing:inherit}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--ink);font:400 16px/1.5 "Public Sans",system-ui,-apple-system,"Segoe UI",sans-serif}
+.wrap{max-width:860px;margin:0 auto;padding:24px 18px 64px}
+button{font:inherit;color:inherit;cursor:pointer}
+:focus-visible{outline:3px solid var(--gold);outline-offset:2px}
+
+/* marquee header */
+.marquee{display:flex;align-items:flex-end;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+h1{font:900 clamp(44px,9vw,76px)/.88 "Big Shoulders Display",Impact,"Arial Narrow",sans-serif;margin:0;letter-spacing:.01em}
+h1 .bulbs{display:block;height:8px;margin-top:10px;background:radial-gradient(circle,var(--gold) 2.5px,transparent 3px) 0 0/14px 8px repeat-x}
+.rule{color:var(--muted);font-size:14px;max-width:30ch;margin:0}
+
+.bar{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:8px 0 16px}
+.tabs{display:inline-flex;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:3px}
+.tabs button{border:0;background:none;padding:7px 16px;border-radius:999px;font-weight:600;font-size:14px;color:var(--muted)}
+.tabs button[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.weeknav{display:flex;align-items:center;gap:6px}
+.weeknav .lbl{font-weight:700;min-width:13ch;text-align:center}
+.iconbtn{border:1px solid var(--line);background:var(--surface);width:36px;height:36px;border-radius:50%;font-size:18px;line-height:1}
+.iconbtn:disabled{opacity:.35;cursor:default}
+.linkbtn{border:0;background:none;color:var(--muted);text-decoration:underline;font-size:14px;padding:4px}
+
+/* podium */
+.podium{display:grid;gap:8px;margin-bottom:22px}
+.prow{display:grid;grid-template-columns:2.2em 1fr auto;align-items:center;gap:12px;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:10px 14px;position:relative;overflow:hidden}
+.prow .fill{position:absolute;inset:0 auto 0 0;background:var(--gold);opacity:.16;transition:width .4s ease}
+.prow > *:not(.fill){position:relative}
+.prow .rk{font:900 26px/1 "Big Shoulders Display",Impact,sans-serif;color:var(--muted)}
+.prow.lead .rk{color:var(--gold)}
+.prow .nm{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prow .pts{font:900 30px/1 "Big Shoulders Display",Impact,sans-serif}
+.prow .pts small{font:500 12px "Public Sans",sans-serif;color:var(--muted);margin-left:4px}
+.prow .sub{font-size:13px;color:var(--muted);font-weight:400}
+
+/* grid */
+.gridwrap{overflow-x:auto;background:var(--surface);border:1px solid var(--line);border-radius:12px}
+table{border-collapse:collapse;width:100%;min-width:520px}
+th,td{padding:0;text-align:center}
+thead th{font-size:13px;font-weight:600;color:var(--muted);padding:10px 4px 8px;border-bottom:1px solid var(--line)}
+thead th .d{display:block;font-size:12px;font-weight:400}
+th.today,td.today{background:var(--today)}
+thead th.today{color:var(--ink)}
+tbody th{text-align:left;font-weight:600;padding:8px 14px;white-space:nowrap;max-width:160px;overflow:hidden;text-overflow:ellipsis}
+tbody tr+tr th,tbody tr+tr td{border-top:1px solid var(--line)}
+td.tot{font:900 22px "Big Shoulders Display",Impact,sans-serif;padding:0 14px}
+.cell{width:100%;height:52px;border:0;background:none;display:grid;place-items:center}
+.chip{display:inline-grid;place-items:center;width:38px;height:30px;border-radius:5px;font-weight:700;font-size:15px;
+  /* film-frame sprockets */
+  box-shadow:inset 0 0 0 2px transparent}
+.chip.empty{border:1.5px dashed var(--line);color:var(--muted);font-weight:400}
+.chip.p0{color:var(--miss);border:1.5px solid var(--miss)}
+.chip.p1{background:var(--s1);color:var(--ink)}
+.chip.p2{background:var(--s2);color:#1B2340}
+.chip.p3{background:var(--s3);color:#fff}
+.chip.p4{background:var(--s4);color:#fff}
+.chip.p5{background:var(--s5);color:var(--bg)}
+.cell:hover .chip.empty{border-color:var(--muted)}
+.cell.future{cursor:default}
+.cell.future .chip{opacity:.35}
+
+.addrow{display:flex;gap:8px;margin-top:14px}
+.addrow input{flex:1;min-width:0;font:inherit;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--surface);color:var(--ink)}
+.btn{border:0;background:var(--ink);color:var(--bg);font-weight:700;padding:10px 18px;border-radius:8px}
+.btn.gold{background:var(--gold);color:var(--gold-ink)}
+
+.empty-state{text-align:center;padding:36px 16px;color:var(--muted)}
+.note{font-size:13px;color:var(--muted);margin-top:18px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;font-size:13px;color:var(--muted);margin-top:12px}
+.legend .chip{width:30px;height:24px;font-size:13px}
+
+/* picker */
+dialog{border:0;padding:0;border-radius:14px;background:var(--surface);color:var(--ink);width:min(380px,calc(100vw - 24px));box-shadow:0 20px 60px rgba(10,14,30,.35)}
+dialog::backdrop{background:rgba(18,23,41,.5)}
+.pk{padding:18px}
+.pk h2{font:900 28px/1 "Big Shoulders Display",Impact,sans-serif;margin:0 0 2px}
+.pk p{margin:0 0 14px;color:var(--muted);font-size:14px}
+.strip{display:grid;grid-template-columns:repeat(5,1fr);gap:6px;padding:10px 8px;background:var(--ink);border-radius:8px;position:relative}
+.strip::before,.strip::after{content:"";position:absolute;left:6px;right:6px;height:4px;background:radial-gradient(circle,var(--surface) 1.6px,transparent 2px) 0 0/10px 4px repeat-x;opacity:.6}
+.strip::before{top:3px}.strip::after{bottom:3px}
+.frame{border:0;border-radius:4px;background:var(--bg);color:var(--ink);padding:12px 0 8px;display:flex;flex-direction:column;align-items:center;gap:2px;margin:6px 0}
+.frame b{font:900 26px/1 "Big Shoulders Display",Impact,sans-serif}
+.frame span{font-size:11px;color:var(--muted)}
+.frame[aria-pressed="true"]{background:var(--gold);color:var(--gold-ink)}
+.frame[aria-pressed="true"] span{color:var(--gold-ink)}
+.pkrow{display:flex;gap:8px;margin-top:12px}
+.pkrow button{flex:1;padding:10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-weight:600}
+.pkrow .miss[aria-pressed="true"]{background:var(--miss);border-color:var(--miss);color:#fff}
+.pkfoot{display:flex;justify-content:space-between;align-items:center;margin-top:14px}
+
+.manage{margin-top:28px;border-top:1px solid var(--line);padding-top:14px}
+.manage ul{list-style:none;padding:0;margin:8px 0 0;display:flex;flex-wrap:wrap;gap:6px}
+.manage li{display:flex;align-items:center;gap:6px;background:var(--surface);border:1px solid var(--line);border-radius:999px;padding:4px 6px 4px 12px;font-size:14px}
+.manage li button{border:0;background:none;color:var(--miss);font-size:16px;line-height:1;padding:2px 6px}
+.toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:8px;font-size:14px;opacity:0;pointer-events:none;transition:opacity .2s}
+.toast.show{opacity:1}
+@media (prefers-reduced-motion:reduce){*{transition:none!important}}
+
+.seasonnav{display:flex;align-items:center;gap:6px}
+.banner{display:flex;align-items:center;gap:14px;background:var(--ink);color:var(--bg);border-radius:12px;padding:14px 18px;margin-bottom:12px}
+.banner .trophy{font-size:30px;line-height:1}
+.banner b{font:900 28px/1 "Big Shoulders Display",Impact,sans-serif;display:block}
+.banner span{font-size:13px;opacity:.8}
+.setup{background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:20px}
+.setup code{background:var(--bg);padding:1px 6px;border-radius:4px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header class="marquee">
+    <h1>Flickle League<span class="bulbs" aria-hidden="true"></span></h1>
+    <p class="rule">Guess on scene 1 for 5 points, down to 1 point on scene 5. Missed is 0.</p>
+  </header>
+
+  <div class="bar">
+    <div class="tabs" role="group" aria-label="View">
+      <button data-view="week" aria-pressed="true">Week</button>
+      <button data-view="season" aria-pressed="false">Season</button>
+      <button data-view="all" aria-pressed="false">All time</button>
+    </div>
+    <div class="weeknav" id="weeknav">
+      <button class="iconbtn" id="prevWk" aria-label="Previous week">‹</button>
+      <span class="lbl" id="wkLabel"></span>
+      <button class="iconbtn" id="nextWk" aria-label="Next week">›</button>
+    </div>
+    <div class="seasonnav" id="seasonnav" hidden>
+      <button class="iconbtn" id="prevSn" aria-label="Previous season">‹</button>
+      <span class="lbl" id="snLabel" style="font-weight:700;min-width:13ch;text-align:center"></span>
+      <button class="iconbtn" id="nextSn" aria-label="Next season">›</button>
+    </div>
+  </div>
+
+  <main id="main"><div class="empty-state">Loading scores…</div></main>
+
+  <section class="manage" id="manage" hidden>
+    <button class="linkbtn" id="toggleManage" aria-expanded="false">Manage players</button>
+    <ul id="playerList" hidden></ul>
+  </section>
+
+  <p class="note" id="modeNote"></p>
+</div>
+
+<dialog id="picker">
+  <div class="pk">
+    <h2 id="pkName"></h2>
+    <p id="pkDay"></p>
+    <div class="strip" id="strip"></div>
+    <div class="pkrow">
+      <button class="miss" id="pkMiss" aria-pressed="false">Missed it · 0 pts</button>
+    </div>
+    <div class="pkfoot">
+      <button class="linkbtn" id="pkClear">Clear entry</button>
+      <button class="btn" id="pkClose">Done</button>
+    </div>
+  </div>
+</dialog>
+<div class="toast" id="toast" role="status"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+<script>
+// ===== Paste your Supabase details here (Project Settings → API) =====
+const SUPABASE_URL = "https://avopvmgwcgvdmhrworvc.supabase.co";
+const SUPABASE_ANON_KEY = "sb_publishable_B_-q4p8y6EOyBWLhkBLaXw_gdj9s0n0"; // publishable key: safe in a web page. NEVER put an sb_secret_ key here
+// =====================================================================
+
+(function(){
+  const DAYS=['Mon','Tue','Wed','Thu','Fri'];
+  const $=id=>document.getElementById(id);
+
+  // ---------- dates & seasons ----------
+  function mondayOf(d){const x=new Date(d.getFullYear(),d.getMonth(),d.getDate());x.setDate(x.getDate()-((x.getDay()+6)%7));return x;}
+  function key(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function fromKey(k){const[y,m,d]=k.split('-').map(Number);return new Date(y,m-1,d);}
+  function addDays(d,n){const x=new Date(d);x.setDate(x.getDate()+n);return x;}
+  const fmtShort=d=>d.toLocaleDateString(undefined,{day:'numeric',month:'short'});
+
+  // Season 1 = January–July, season 2 = August–December
+  function seasonOf(d){return d.getFullYear()+'-'+(d.getMonth()<=6?1:2);}
+  function seasonLabel(s){const[y,n]=s.split('-');return (n==='1'?'Jan–Jul ':'Aug–Dec ')+y;}
+  function seasonShift(s,dir){let[y,n]=s.split('-').map(Number);n+=dir;if(n>2){n=1;y++;}if(n<1){n=2;y--;}return y+'-'+n;}
+  const dayDate=(week,i)=>addDays(fromKey(week),i);
+
+  const thisWeek=key(mondayOf(new Date()));
+  const thisSeason=seasonOf(new Date());
+  const todayIdx=(()=>{const wd=(new Date().getDay()+6)%7;return wd<5?wd:-1;})();
+
+  const state={players:[],scores:{},week:thisWeek,season:thisSeason,view:'week',ready:false};
+  // scores: { "week|playerId|day": points }
+
+  // ---------- helpers ----------
+  const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  const sk=(w,p,i)=>w+'|'+p+'|'+i;
+  function dayPts(w,p,i){const v=state.scores[sk(w,p,i)];return typeof v==='number'?v:null;}
+  function weekTotal(w,p){let t=0;for(let i=0;i<5;i++){const v=dayPts(w,p,i);if(v)t+=v;}return t;}
+  function isFutureDay(w,i){return w>thisWeek||(w===thisWeek&&todayIdx!==-1&&i>todayIdx);}
+  function entries(){return Object.entries(state.scores).map(([k,v])=>{const[w,p,i]=k.split('|');return{w,p,i:+i,v};});}
+  let toastT;
+  function toast(m){const t=$('toast');t.textContent=m;t.classList.add('show');clearTimeout(toastT);toastT=setTimeout(()=>t.classList.remove('show'),3200);}
+
+  // ---------- Supabase ----------
+  const configured=!SUPABASE_URL.startsWith('PASTE')&&!SUPABASE_ANON_KEY.startsWith('PASTE');
+  let sb=null;
+
+  async function loadAll(){
+    const p=await sb.from('players').select('*').order('created_at');
+    if(p.error) throw p.error;
+    const rows=[];const size=1000;
+    for(let from=0;;from+=size){
+      const r=await sb.from('scores').select('player_id,week,day,points').range(from,from+size-1);
+      if(r.error) throw r.error;
+      rows.push(...r.data); if(r.data.length<size) break;
+    }
+    state.players=p.data;
+    const m={}; rows.forEach(r=>{m[sk(r.week,r.player_id,r.day)]=r.points;});
+    state.scores=m; state.ready=true; render();
+  }
+  let reloadT;
+  function scheduleReload(){clearTimeout(reloadT);reloadT=setTimeout(()=>loadAll().catch(fail),250);}
+  function fail(){toast('Couldn’t reach the scoreboard. Check your connection and reload.');}
+
+  async function run(fn){const r=await fn();if(r&&r.error){toast('That didn’t save. Try again in a moment.');console.error(r.error);return false;}return true;}
+
+  // ---------- render ----------
+  function render(){
+    $('wkLabel').textContent=state.week===thisWeek?'This week':'Week of '+fmtShort(fromKey(state.week));
+    $('nextWk').disabled=state.week>=thisWeek;
+    $('snLabel').textContent=seasonLabel(state.season);
+    $('nextSn').disabled=state.season>=thisSeason;
+    $('weeknav').hidden=state.view!=='week';
+    $('seasonnav').hidden=state.view!=='season';
+    document.querySelectorAll('.tabs button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.view===state.view));
+    $('modeNote').textContent=configured?'Tap a box to enter which scene someone guessed it on. Everyone with the link sees the same board.':'';
+    const main=$('main');
+    if(!configured){main.innerHTML=`<div class="setup"><p><b>Almost there.</b> Open <code>index.html</code> and paste your Supabase project URL and anon public key at the top of the script, then upload it again.</p></div>`;return;}
+    if(!state.ready){main.innerHTML='<div class="empty-state">Loading scores…</div>';return;}
+    if(!state.players.length){main.innerHTML='<div class="empty-state"><p>No players yet. Add everyone in the competition to start scoring.</p></div>'+addRow();wireAdd();renderManage();return;}
+    main.innerHTML=state.view==='week'?renderWeek():standings(state.view==='season'?state.season:null);
+    if(state.view==='week'){wireGrid();wireAdd();}
+    renderManage();
+  }
+
+  function addRow(){return '<form class="addrow" id="addForm" autocomplete="off"><label for="newName" style="position:absolute;left:-9999px">Player name</label><input id="newName" maxlength="40" placeholder="Add a player"><button class="btn gold" type="submit">Add player</button></form>';}
+
+  function podiumRow(rank,lead,fillPct,name,sub,pts){
+    return `<div class="prow ${lead?'lead':''}"><span class="fill" style="width:${fillPct.toFixed(1)}%"></span><span class="rk">${rank}</span><span class="nm">${esc(name)}${sub?'<br><span class="sub">'+sub+'</span>':''}</span><span class="pts">${pts}<small>pts</small></span></div>`;
+  }
+
+  function renderWeek(){
+    const wk=fromKey(state.week);
+    const rows=state.players.map(p=>({p,t:weekTotal(state.week,p.id),played:[0,1,2,3,4].filter(i=>dayPts(state.week,p.id,i)!==null).length})).sort((a,b)=>b.t-a.t||a.p.name.localeCompare(b.p.name));
+    const max=Math.max(25,...rows.map(r=>r.t)),top=rows[0].t;
+    let rank=0,prev=null;
+    const podium=rows.map((r,i)=>{if(r.t!==prev){rank=i+1;prev=r.t;}return podiumRow(rank,r.t>0&&r.t===top,r.t/max*100,r.p.name,r.played+'/5 days',r.t);}).join('');
+    const head=DAYS.map((d,i)=>`<th class="${state.week===thisWeek&&i===todayIdx?'today':''}">${d}<span class="d">${fmtShort(addDays(wk,i))}</span></th>`).join('');
+    const body=state.players.map(p=>{
+      const cells=DAYS.map((d,i)=>{
+        const v=dayPts(state.week,p.id,i),fut=isFutureDay(state.week,i);
+        const chip=v===null?'<span class="chip empty">+</span>':`<span class="chip p${v}">${v}</span>`;
+        return `<td class="${state.week===thisWeek&&i===todayIdx?'today':''}"><button class="cell ${fut?'future':''}" data-p="${esc(p.id)}" data-i="${i}" ${fut?'disabled':''} aria-label="${esc(p.name+', '+d+': '+(v===null?'no entry':v+' points'))}">${chip}</button></td>`;
+      }).join('');
+      return `<tr><th scope="row">${esc(p.name)}</th>${cells}<td class="tot">${weekTotal(state.week,p.id)}</td></tr>`;
+    }).join('');
+    const legend=`<div class="legend">Scene guessed: ${[1,2,3,4,5].map(s=>`<span class="chip p${6-s}">${6-s}</span>`).join(' ')} = scene 1 to 5, <span class="chip p0">0</span> = missed</div>`;
+    return `<div class="podium">${podium}</div><div class="gridwrap"><table><thead><tr><th style="text-align:left;padding-left:14px">Player</th>${head}<th>Total</th></tr></thead><tbody>${body}</tbody></table></div>${legend}${addRow()}`;
+  }
+
+  // season = "2026-2" for one season, null for all time
+  function standings(season){
+    const inScope=(w,i)=>!season||seasonOf(dayDate(w,i))===season;
+    const all=entries().filter(e=>inScope(e.w,e.i));
+    // weeks won: finished weeks whose Monday falls in scope
+    const weeks=[...new Set(all.map(e=>e.w))].filter(w=>w<thisWeek&&(!season||seasonOf(fromKey(w))===season));
+    const wins={};
+    weeks.forEach(w=>{let best=0;state.players.forEach(p=>best=Math.max(best,weekTotal(w,p.id)));if(best>0)state.players.forEach(p=>{if(weekTotal(w,p.id)===best)wins[p.id]=(wins[p.id]||0)+1;});});
+    const stats=state.players.map(p=>{
+      let total=0,days=0,firsts=0;
+      all.forEach(e=>{if(e.p!==p.id)return;total+=e.v;days++;if(e.v===5)firsts++;});
+      const carry=(p.carry&&(!season||p.carry_season===season))?p.carry:0;
+      return{p,total:total+carry,carry,days,firsts,wins:wins[p.id]||0,avg:days?total/days:0};
+    }).sort((a,b)=>b.total-a.total||b.avg-a.avg);
+    const max=Math.max(1,...stats.map(s=>s.total)),top=stats[0].total;
+    let rank=0,prev=null;
+    const rows=stats.map((s,i)=>{
+      if(s.total!==prev){rank=i+1;prev=s.total;}
+      const sub=`${s.avg.toFixed(1)} avg · ${s.wins} week${s.wins===1?'':'s'} won · ${s.firsts} first-scene guess${s.firsts===1?'':'es'}${s.carry?` · includes ${s.carry} earlier pt${s.carry===1?'':'s'}`:''}`;
+      return podiumRow(rank,s.total>0&&s.total===top,s.total/max*100,s.p.name,sub,s.total);
+    }).join('');
+    let banner='';
+    if(season&&top>0){
+      const leaders=stats.filter(s=>s.total===top).map(s=>esc(s.p.name)).join(' & ');
+      const done=season<thisSeason;
+      banner=`<div class="banner"><span class="trophy" aria-hidden="true">${done?'🏆':'🎬'}</span><div><b>${leaders}</b><span>${done?'Season champion':'Leading the season'} with ${top} points</span></div></div>`;
+    }
+    if(season&&top===0) return `<div class="empty-state">No scores in ${seasonLabel(season)}.</div>`;
+    return `${banner}<div class="podium">${rows}</div><p class="note">Weeks won counts finished weeks only. Ties share the win. Earlier points were logged before the board started and count toward totals only.</p>`;
+  }
+
+  function renderManage(){
+    $('manage').hidden=!state.players.length;
+    $('playerList').innerHTML=state.players.map(p=>`<li>${esc(p.name)} <button data-rm="${esc(p.id)}" aria-label="Remove ${esc(p.name)}">×</button></li>`).join('');
+    $('playerList').querySelectorAll('[data-rm]').forEach(b=>b.onclick=async()=>{
+      const p=state.players.find(x=>x.id===b.dataset.rm);
+      if(p&&confirm(`Remove ${p.name}? This also deletes all their scores.`)){if(await run(()=>sb.from('players').delete().eq('id',p.id)))loadAll().catch(fail);}
+    });
+  }
+
+  function wireAdd(){
+    const f=$('addForm');if(!f)return;
+    f.onsubmit=async e=>{e.preventDefault();const inp=$('newName'),name=inp.value.trim();if(!name)return;
+      if(state.players.some(p=>p.name.toLowerCase()===name.toLowerCase())){toast(name+' is already on the board.');return;}
+      inp.value='';if(await run(()=>sb.from('players').insert({name})))loadAll().catch(fail);};
+  }
+
+  // ---------- picker ----------
+  let pick=null;
+  function wireGrid(){document.querySelectorAll('.cell:not([disabled])').forEach(b=>b.onclick=()=>openPicker(b.dataset.p,+b.dataset.i));}
+  function openPicker(pid,i){
+    const p=state.players.find(x=>x.id===pid);if(!p)return;
+    pick={pid,i,week:state.week};
+    $('pkName').textContent=p.name;
+    $('pkDay').textContent='Which scene did they get it on? '+DAYS[i]+' '+fmtShort(dayDate(state.week,i));
+    const cur=dayPts(pick.week,pid,i);
+    $('strip').innerHTML=[1,2,3,4,5].map(s=>`<button class="frame" data-v="${6-s}" aria-pressed="${cur===6-s}"><b>${s}</b><span>${6-s} pt${6-s===1?'':'s'}</span></button>`).join('');
+    $('strip').querySelectorAll('.frame').forEach(b=>b.onclick=()=>choose(+b.dataset.v));
+    $('pkMiss').setAttribute('aria-pressed',cur===0);
+    $('picker').showModal();
+  }
+  async function choose(v){
+    const{pid,i,week}=pick;const k=sk(week,pid,i);const before=state.scores[k];
+    $('picker').close();
+    if(v===null)delete state.scores[k];else state.scores[k]=v; render(); // show it right away
+    const ok=await run(()=>v===null
+      ?sb.from('scores').delete().match({player_id:pid,week,day:i})
+      :sb.from('scores').upsert({player_id:pid,week,day:i,points:v,updated_at:new Date().toISOString()},{onConflict:'player_id,week,day'}));
+    if(!ok){if(before===undefined)delete state.scores[k];else state.scores[k]=before;render();}
+  }
+  $('pkMiss').onclick=()=>choose(0);
+  $('pkClear').onclick=()=>choose(null);
+  $('pkClose').onclick=()=>$('picker').close();
+  $('picker').addEventListener('click',e=>{if(e.target===$('picker'))$('picker').close();});
+
+  // ---------- nav ----------
+  $('prevWk').onclick=()=>{state.week=key(addDays(fromKey(state.week),-7));render();};
+  $('nextWk').onclick=()=>{if(state.week<thisWeek){state.week=key(addDays(fromKey(state.week),7));render();}};
+  $('prevSn').onclick=()=>{state.season=seasonShift(state.season,-1);render();};
+  $('nextSn').onclick=()=>{if(state.season<thisSeason){state.season=seasonShift(state.season,1);render();}};
+  document.querySelectorAll('.tabs button').forEach(b=>b.onclick=()=>{state.view=b.dataset.view;render();});
+  $('toggleManage').onclick=()=>{const l=$('playerList');l.hidden=!l.hidden;$('toggleManage').setAttribute('aria-expanded',String(!l.hidden));};
+
+  // ---------- boot ----------
+  render();
+  if(configured){
+    if(!window.supabase){toast('Couldn’t load Supabase. Check your connection and reload.');return;}
+    sb=window.supabase.createClient(SUPABASE_URL,SUPABASE_ANON_KEY);
+    loadAll().catch(fail);
+    sb.channel('flickle-league')
+      .on('postgres_changes',{event:'*',schema:'public',table:'scores'},scheduleReload)
+      .on('postgres_changes',{event:'*',schema:'public',table:'players'},scheduleReload)
+      .subscribe();
+    document.addEventListener('visibilitychange',()=>{if(!document.hidden)scheduleReload();});
+  }
+})();
+</script>
+</body>
+</html>
